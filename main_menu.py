@@ -13,7 +13,7 @@ def clean_temp():
         return
     for file in os.listdir(temp_dir):
         if file.endswith(".srt"):
-            continue  # SRT behalten!
+            continue
         path = os.path.join(temp_dir, file)
         if os.path.isfile(path):
             os.remove(path)
@@ -29,7 +29,7 @@ def archive_srt(base_name):
         subprocess.run(["cp", srt_src, srt_dest])
         print(f"📁 SRT archiviert: subtitles/{base_name}_en.srt")
 
-def process_bulk():
+def process_bulk(pause_after_glossary=False):
     input_dir = "input"
     output_dir = "output"
     temp_dir = CONFIG.get("temp_dir", "temp")
@@ -52,9 +52,15 @@ def process_bulk():
         subprocess.run(["ffmpeg", "-i", video_path, "-q:a", "0", "-map", "a", f"{temp_dir}/{base_name}.wav", "-y"])
         run("step_transcribe.py", base_name)
         run("apply_glossary.py", base_name)
+
+        if pause_after_glossary:
+            print(f"⏸️ Du kannst jetzt 'glossary.py' oder 'temp/{base_name}_en.srt' bearbeiten.")
+            input("🔄 Drücke [Enter], um mit der Verarbeitung fortzufahren...")
+
         archive_srt(base_name)
         run("step_tts.py", base_name)
         run("step_video.py", base_name)
+
         clean_temp()
 
     print("\n✅ Alle Videos wurden verarbeitet.")
@@ -154,10 +160,10 @@ def menu():
     while True:
         print("\n🎬 AI Video Menü")
         print("1️⃣  Transkription (Whisper)")
-        print("2️⃣  Glossar anwenden")
+        print("2️⃣  Glossar anwenden (DE + EN)")
         print("3️⃣  Sprachclips erzeugen (Coqui TTS)")
         print("4️⃣  Neues Video bauen")
-        print("5️⃣  ALLES ausführen (1 → 2 → 3 → 4)")
+        print("5️⃣  ALLES ausführen (mit Pause-Option)")
         print("6️⃣  🔁 Alle Videos im Ordner 'input/' verarbeiten")
         print("7️⃣  🔊 Stimme auswählen und speichern")
         print("8️⃣  🧹 Temp-Dateien löschen")
@@ -171,35 +177,52 @@ def menu():
             base = input("🎞️ Basis-Dateiname (ohne .mp4): ").strip()
             run("step_transcribe.py", base)
             archive_srt(base)
+
         elif choice == "2":
-            base = input("📜 Basis-Dateiname: ").strip()
+            base = input("📜 Basis-Dateiname (ohne .mp4): ").strip()
+            print(f"🔤 Wende Glossar auf DE & EN Untertitel für '{base}' an...")
             run("apply_glossary.py", base)
+
         elif choice == "3":
             base = input("🗣️ Basis-Dateiname: ").strip()
             run("step_tts.py", base)
+
         elif choice == "4":
             base = input("🎬 Basis-Dateiname: ").strip()
             run("step_video.py", base)
+
         elif choice == "5":
-            base = input("🚀 Basis-Dateiname: ").strip()
+            base = input("🚀 Basis-Dateiname (ohne .mp4): ").strip()
+            pause = CONFIG.get("manual_pause_after_glossary", False)
             run("step_transcribe.py", base)
             run("apply_glossary.py", base)
+            if pause:
+                print("⏸️ Bearbeite nun ggf. 'glossary.py' oder 'temp/{}_en.srt'".format(base))
+                input("🔄 Drücke [Enter], um fortzufahren...")
             archive_srt(base)
             run("step_tts.py", base)
             run("step_video.py", base)
+
         elif choice == "6":
-            process_bulk()
+            pause_bulk = CONFIG.get("bulk_pause_after_glossary", False)
+            process_bulk(pause_after_glossary=pause_bulk)
+
         elif choice == "7":
             select_speaker()
+
         elif choice == "8":
             clean_temp()
+
         elif choice == "9":
             reencode_existing()
+
         elif choice == "10":
             rebuild_from_existing_srt()
+
         elif choice == "0":
             print("👋 Tschüss!")
             break
+
         else:
             print("❌ Ungültige Eingabe.")
 
