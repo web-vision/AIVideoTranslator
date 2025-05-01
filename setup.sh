@@ -1,19 +1,24 @@
 #!/bin/bash
 
 echo "🚀 Starte Setup für AI Video Voiceover Projekt"
-
-# Exit bei Fehlern
 set -e
 
-# Virtuelle Umgebung erstellen
-echo "📦 Erstelle virtuelle Python-Umgebung..."
+# 🧹 Alte virtuelle Umgebung bereinigen
+if [ -d "venv" ]; then
+  echo "🧽 Entferne vorhandene virtuelle Umgebung..."
+  deactivate 2>/dev/null || true
+  rm -rf venv
+fi
+
+# 📦 Neue virtuelle Umgebung erstellen
+echo "📦 Erstelle neue virtuelle Python-Umgebung..."
 python3 -m venv venv
 source venv/bin/activate
 
-# Pip upgraden
+# 🆙 Pip aktualisieren
 pip install --upgrade pip
 
-# FFmpeg Installation prüfen
+# 🔧 FFmpeg Installation prüfen
 if ! command -v ffmpeg &> /dev/null; then
     echo "🔧 ffmpeg wird über Homebrew installiert..."
     brew install ffmpeg
@@ -21,43 +26,38 @@ else
     echo "✅ ffmpeg ist bereits installiert."
 fi
 
-# Kompatible Torch-Version (2.0.1 für Bark)
-echo "📦 Installiere kompatibles PyTorch (2.0.1)..."
-pip install torch==2.0.1 torchvision torchaudio
+# 🔤 Hunspell CLI installieren
+if ! command -v hunspell &> /dev/null; then
+    echo "🔤 Installiere Hunspell über Homebrew..."
+    brew install hunspell
+else
+    echo "✅ Hunspell ist bereits installiert."
+fi
 
-# Whisper (direkt von GitHub)
-echo "🧠 Installiere Whisper..."
+echo "✅ Hunspell CLI wird verwendet (kein Python-Binding notwendig)"
+
+# 📥 Wörterbuch (Deutsch) von LibreOffice laden
+echo "🌍 Lade deutsches Hunspell-Wörterbuch von GitHub..."
+mkdir -p dictionary/libreoffice
+curl -L -o dictionary/libreoffice/de_DE_frami.dic https://raw.githubusercontent.com/LibreOffice/dictionaries/master/de/de_DE_frami.dic
+curl -L -o dictionary/libreoffice/de_DE_frami.aff https://raw.githubusercontent.com/LibreOffice/dictionaries/master/de/de_DE_frami.aff
+
+echo "✅ Wörterbuch-Dateien heruntergeladen."
+
+# 📦 Weitere Python-Tools
+echo "📦 Installiere benötigte Python-Pakete..."
 pip install git+https://github.com/openai/whisper.git
+pip install pysrt
 
-# Bark + Abhängigkeiten
-echo "🐶 Installiere Bark + SciPy..."
-pip install git+https://github.com/suno-ai/bark.git
-pip install scipy
+# 📁 Projektordner anlegen
+mkdir -p input output temp subtitles dictionary hunspell_dicts
 
-# Coqui TTS + weitere Tools
-echo "🗣️ Installiere Coqui TTS und pysrt..."
-pip install TTS pysrt
-
-# Arbeitsverzeichnisse erstellen
-echo "📁 Lege Arbeitsverzeichnisse an..."
-mkdir -p input output temp subtitles dictionary
-
-# Wörterbücher herunterladen
-echo "📚 Lade öffentlich verfügbare Wörterbücher herunter..."
-
-curl -s -L -o dictionary/german.dic \
-  https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/de/index.dic
-
-curl -s -L -o dictionary/english.dic \
-  https://raw.githubusercontent.com/wooorm/dictionaries/main/dictionaries/en/index.dic
-
-echo "✅ Wörterbücher gespeichert in: dictionary/"
-
+echo ""
+echo "📘 Hinweis:"
+echo "👉 Um alle Wortformen zu generieren, verwende:"
+echo "   python expand_hunspell_cli.py"
+echo "📁 Ausgabe: dictionary/german_expanded.dic"
 echo ""
 echo "✅ Setup abgeschlossen!"
-echo ""
-echo "👉 Aktiviere die Umgebung mit:"
-echo "   source venv/bin/activate"
-echo ""
-echo "📁 Danach kannst du dein Skript starten mit:"
-echo "   python main_menu.py"
+echo "👉 Aktiviere die Umgebung mit: source venv/bin/activate"
+echo "▶️  Starte dann mit: python main_menu.py"
