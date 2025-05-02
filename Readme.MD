@@ -7,6 +7,13 @@ I started this project to translate the great #TYPO3 traning videos which are pr
 
 **Big Kudos** to Wolfgang Wagner for providing us with the videos, which we now can use for internal trainings of TYPO3 beginners. 
 
+## 🍿 Demo 
+To check the quality of the AIVideo Translator you might want to check these short clips of Wolfgang Wagner talking about Search in TYPO3 on YouTube:
+- [Original German version](https://youtu.be/oIEIJHzuJdk)
+- [AI translated English version](https://youtu.be/6LkiJ60ifIE)
+
+## 💻 Screenshot
+![AIVideo Translator Screenshot](demo/AIVideo-Translator-Screenshot.png)
 
 ## 🌐 Features
 
@@ -45,12 +52,12 @@ I started this project to translate the great #TYPO3 traning videos which are pr
 
 3. Install dependencies:
     ```bash
-    pip install -r requirements.txt
+    setup.sh
     ```
 
-4. Run an example:
+4. Run maim menu:
     ```bash
-    python translate.py --input video.mp4 --source-lang en --target-lang de
+    python main_menu.py
     ```
 
 ---
